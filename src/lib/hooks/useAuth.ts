@@ -94,21 +94,13 @@ export function useCheckAuth() {
         throw new AuthError('Token expired');
       }
 
-      try {
-        const { data } = await api.get<AuthUser>('/Account/me');
-        return {
-          user: {
-            ...data,
-            role: decoded.role as UserRole,
-          }
-        };
-      } catch (error) {
-        clearToken();
-        throw error;
-      }
+      return {
+        user: {
+          role: decoded.role,
+        }
+      };
     },
-    retry: 0,
-    staleTime: STALE_TIME,
+    retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
