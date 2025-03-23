@@ -2,15 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { UserRole } from '@/types';
 import { useLogin } from '@/lib/hooks/useAuth';
 import { toast } from 'sonner';
 
-interface LoginFormProps {
-  onSubmit: (username: string, password: string, role: UserRole) => void;
-}
-
-export function LoginForm({ onSubmit }: LoginFormProps) {
+export function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const login = useLogin();
@@ -18,12 +13,9 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await login.mutateAsync({ username, password });
-      console.log('Login response:', response); // Debug log
-      console.log('User role:', response.user.role); // Debug log
-      onSubmit(username, password, response.user.role);
+      await login.mutateAsync({ username, password });
     } catch (error) {
-      console.error('Login error:', error); // Debug log
+      console.error('Login error:', error);
       toast.error('Login failed. Please check your credentials.');
     }
   };
