@@ -1,7 +1,7 @@
 import { Outlet, createRootRoute, useNavigate } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useCheckAuth } from '@/lib/hooks/useAuth'
-import Header from '../components/Header'
+import { Header } from "@/components/Header"
 import { useEffect } from 'react'
 
 const LOGIN_PATH = '/';
