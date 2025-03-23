@@ -10,12 +10,24 @@ interface CreateAssignmentData {
   createdBy: string;
 }
 
+interface EditAssignmentData {
+  title: string;
+  description: string;
+  dueDate: string;
+}
+
+interface EditAssignmentResponse {
+  message: string;
+  assignment: Assignment;
+}
+
 export function useAssignments() {
   return useQuery({
     queryKey: ['assignments'],
     queryFn: async () => {
       try {
         console.log('Fetching assignments...');
+        console.log('Current token:', localStorage.getItem('token'));
         const response = await api.get<PaginatedResponse<Assignment>>('/Teacher/my-assignments');
         console.log('Raw API Response:', response);
         
@@ -25,6 +37,41 @@ export function useAssignments() {
         console.error('Error fetching assignments:', error);
         throw error;
       }
+    },
+  });
+}
+
+export function useEditAssignment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: EditAssignmentData }) => {
+      try {
+        // Format the date to match the API's expected format (MM/DD/YYYY)
+        const formattedData = {
+          ...data,
+          dueDate: new Date(data.dueDate).toLocaleDateString('en-US')
+        };
+        
+        console.log('Sending edit data:', {
+          url: `/Teacher/assignments/${id}`,
+          data: formattedData,
+          token: localStorage.getItem('token')
+        });
+
+        const response = await api.put<EditAssignmentResponse>(`/Teacher/assignments/${id}`, formattedData);
+        console.log('Edit response:', response.data);
+        return response.data;
+      } catch (error: any) {
+        console.error('Edit assignment error:', error);
+        if (error.response?.status === 401) {
+          throw new Error('Authentication failed. Please log in again.');
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
     },
   });
 }

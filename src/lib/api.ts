@@ -5,7 +5,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // This is important for CORS
 });
 
 // Add request interceptor for authentication
@@ -14,7 +13,29 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('Request config:', {
+    url: config.url,
+    method: config.method,
+    headers: config.headers,
+  });
   return config;
+}, (error) => {
+  console.error('Request interceptor error:', error);
+  return Promise.reject(error);
 });
+
+// Add response interceptor for handling auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token might be expired or invalid
+      console.error('Authentication error:', error);
+      localStorage.removeItem('token'); // Clear invalid token
+      window.location.href = '/'; // Redirect to login
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api; 
