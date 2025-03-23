@@ -12,10 +12,11 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
-import { Route as TeacherDashboardImport } from './routes/teacher.dashboard'
+import { Route as TeacherDashboardImport } from './routes/teacher/dashboard'
 import { Route as StudentDashboardImport } from './routes/student/dashboard'
 import { Route as StudentAssignmentsIndexImport } from './routes/student/assignments/index'
 import { Route as StudentAssignmentsAssignmentIdImport } from './routes/student/assignments/$assignmentId'
+import { Route as TeacherAssignmentsAssignmentIdSubmissionsImport } from './routes/teacher/assignments/$assignmentId/submissions'
 
 // Create/Update Routes
 
@@ -47,6 +48,13 @@ const StudentAssignmentsAssignmentIdRoute =
   StudentAssignmentsAssignmentIdImport.update({
     id: '/student/assignments/$assignmentId',
     path: '/student/assignments/$assignmentId',
+    getParentRoute: () => rootRoute,
+  } as any)
+
+const TeacherAssignmentsAssignmentIdSubmissionsRoute =
+  TeacherAssignmentsAssignmentIdSubmissionsImport.update({
+    id: '/teacher/assignments/$assignmentId/submissions',
+    path: '/teacher/assignments/$assignmentId/submissions',
     getParentRoute: () => rootRoute,
   } as any)
 
@@ -89,6 +97,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentAssignmentsIndexImport
       parentRoute: typeof rootRoute
     }
+    '/teacher/assignments/$assignmentId/submissions': {
+      id: '/teacher/assignments/$assignmentId/submissions'
+      path: '/teacher/assignments/$assignmentId/submissions'
+      fullPath: '/teacher/assignments/$assignmentId/submissions'
+      preLoaderRoute: typeof TeacherAssignmentsAssignmentIdSubmissionsImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -100,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/teacher/dashboard': typeof TeacherDashboardRoute
   '/student/assignments/$assignmentId': typeof StudentAssignmentsAssignmentIdRoute
   '/student/assignments': typeof StudentAssignmentsIndexRoute
+  '/teacher/assignments/$assignmentId/submissions': typeof TeacherAssignmentsAssignmentIdSubmissionsRoute
 }
 
 export interface FileRoutesByTo {
@@ -108,6 +124,7 @@ export interface FileRoutesByTo {
   '/teacher/dashboard': typeof TeacherDashboardRoute
   '/student/assignments/$assignmentId': typeof StudentAssignmentsAssignmentIdRoute
   '/student/assignments': typeof StudentAssignmentsIndexRoute
+  '/teacher/assignments/$assignmentId/submissions': typeof TeacherAssignmentsAssignmentIdSubmissionsRoute
 }
 
 export interface FileRoutesById {
@@ -117,6 +134,7 @@ export interface FileRoutesById {
   '/teacher/dashboard': typeof TeacherDashboardRoute
   '/student/assignments/$assignmentId': typeof StudentAssignmentsAssignmentIdRoute
   '/student/assignments/': typeof StudentAssignmentsIndexRoute
+  '/teacher/assignments/$assignmentId/submissions': typeof TeacherAssignmentsAssignmentIdSubmissionsRoute
 }
 
 export interface FileRouteTypes {
@@ -127,6 +145,7 @@ export interface FileRouteTypes {
     | '/teacher/dashboard'
     | '/student/assignments/$assignmentId'
     | '/student/assignments'
+    | '/teacher/assignments/$assignmentId/submissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -134,6 +153,7 @@ export interface FileRouteTypes {
     | '/teacher/dashboard'
     | '/student/assignments/$assignmentId'
     | '/student/assignments'
+    | '/teacher/assignments/$assignmentId/submissions'
   id:
     | '__root__'
     | '/'
@@ -141,6 +161,7 @@ export interface FileRouteTypes {
     | '/teacher/dashboard'
     | '/student/assignments/$assignmentId'
     | '/student/assignments/'
+    | '/teacher/assignments/$assignmentId/submissions'
   fileRoutesById: FileRoutesById
 }
 
@@ -150,6 +171,7 @@ export interface RootRouteChildren {
   TeacherDashboardRoute: typeof TeacherDashboardRoute
   StudentAssignmentsAssignmentIdRoute: typeof StudentAssignmentsAssignmentIdRoute
   StudentAssignmentsIndexRoute: typeof StudentAssignmentsIndexRoute
+  TeacherAssignmentsAssignmentIdSubmissionsRoute: typeof TeacherAssignmentsAssignmentIdSubmissionsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -158,6 +180,8 @@ const rootRouteChildren: RootRouteChildren = {
   TeacherDashboardRoute: TeacherDashboardRoute,
   StudentAssignmentsAssignmentIdRoute: StudentAssignmentsAssignmentIdRoute,
   StudentAssignmentsIndexRoute: StudentAssignmentsIndexRoute,
+  TeacherAssignmentsAssignmentIdSubmissionsRoute:
+    TeacherAssignmentsAssignmentIdSubmissionsRoute,
 }
 
 export const routeTree = rootRoute
@@ -174,7 +198,8 @@ export const routeTree = rootRoute
         "/student/dashboard",
         "/teacher/dashboard",
         "/student/assignments/$assignmentId",
-        "/student/assignments/"
+        "/student/assignments/",
+        "/teacher/assignments/$assignmentId/submissions"
       ]
     },
     "/": {
@@ -184,13 +209,16 @@ export const routeTree = rootRoute
       "filePath": "student/dashboard.tsx"
     },
     "/teacher/dashboard": {
-      "filePath": "teacher.dashboard.tsx"
+      "filePath": "teacher/dashboard.tsx"
     },
     "/student/assignments/$assignmentId": {
       "filePath": "student/assignments/$assignmentId.tsx"
     },
     "/student/assignments/": {
       "filePath": "student/assignments/index.tsx"
+    },
+    "/teacher/assignments/$assignmentId/submissions": {
+      "filePath": "teacher/assignments/$assignmentId/submissions.tsx"
     }
   }
 }
