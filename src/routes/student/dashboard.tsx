@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, FileText, GraduationCap } from "lucide-react";
 import { assignmentsService, type Assignment } from "@/lib/services/assignments";
 import { useCheckAuth } from "@/lib/hooks/useAuth";
-import { toast } from "sonner";
 
 export const Route = createFileRoute('/student/dashboard')({
   component: StudentDashboard,
@@ -88,32 +87,75 @@ function StudentDashboard() {
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Recent Assignments</h2>
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {pendingAssignments.slice(0, 5).map((assignment) => (
-            <Card key={assignment.id}>
-              <CardContent className="flex items-center justify-between p-4">
-                <div>
-                  <h3 className="font-medium">{assignment.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                  </p>
-                </div>
-                <Button asChild>
-                  <a href={`/student/assignments/${assignment.id}`}>
-                    View Assignment
-                  </a>
-                </Button>
-              </CardContent>
-            </Card>
+            <AssignmentCard key={assignment.id} assignment={assignment} />
           ))}
 
           {pendingAssignments.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
+            <div className="text-center text-muted-foreground py-8 md:col-span-2 lg:col-span-3">
               No pending assignments
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function AssignmentCard({ assignment }: { assignment: Assignment }) {
+  const status = assignment.status || 'pending';
+  const statusColors = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    submitted: 'bg-blue-100 text-blue-800',
+    graded: 'bg-green-100 text-green-800',
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-xl">{assignment.title}</CardTitle>
+          <div className="flex flex-col items-end gap-2">
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                statusColors[status]
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+            {assignment.hasSubmission && (
+              <span className="text-xs text-green-600 font-medium">
+                ✓ Submitted
+              </span>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500 line-clamp-2">
+            {assignment.description}
+          </p>
+          <p className="text-sm">
+            Due: {new Date(assignment.dueDate).toLocaleDateString()}
+          </p>
+          <div className="flex gap-2">
+            <Button className="flex-1" asChild variant={assignment.hasSubmission ? "outline" : "default"}>
+              <a href={`/student/assignments/${assignment.id}`}>
+                {assignment.hasSubmission ? 'Edit Submission' : 'Submit Assignment'}
+              </a>
+            </Button>
+            {assignment.hasSubmission && (
+              <Button className="flex-1" asChild>
+                <a href={`/student/assignments/${assignment.id}/submission`}>
+                  View Submission
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 } 
