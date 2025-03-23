@@ -1,18 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
-import { useLogout } from "@/lib/hooks/useAuth";
+import { useLogout, useCheckAuth } from "@/lib/hooks/useAuth";
 import { LayoutDashboard, LogOut } from "lucide-react";
 
 export function Header() {
   const navigate = useNavigate();
   const logout = useLogout();
+  const { data: auth } = useCheckAuth();
 
   const handleLogout = async () => {
     await logout.mutateAsync();
   };
 
   const handleDashboard = () => {
-    navigate({ to: '/student/dashboard' });
+    const dashboardPath = auth?.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
+    navigate({ to: dashboardPath });
   };
 
   return (
@@ -28,7 +30,7 @@ export function Header() {
               className="flex items-center gap-2"
             >
               <LayoutDashboard className="h-4 w-4" />
-              Dashboard
+              {auth?.user?.role === 'teacher' ? 'Teacher Dashboard' : 'Student Dashboard'}
             </Button>
             
             <Button 
