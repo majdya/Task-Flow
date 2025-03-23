@@ -1,39 +1,43 @@
-import { Outlet, createRootRoute } from '@tanstack/react-router'
+import { Outlet, createRootRoute, useNavigate } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useCheckAuth } from '@/lib/hooks/useAuth'
 import Header from '../components/Header'
+import { useEffect } from 'react'
+
+const LOGIN_PATH = '/';
 
 export const Route = createRootRoute({
-  component: () => {
-    const { data: auth, isLoading } = useCheckAuth();
-    const isLoginPage = window.location.pathname === '/';
+  component: RootComponent,
+});
 
-    if (isLoading) {
-      return <div>Loading...</div>;
+function RootComponent() {
+  const { data: auth, isLoading } = useCheckAuth();
+  const navigate = useNavigate();
+  const isLoginPage = window.location.pathname === LOGIN_PATH;
+
+  useEffect(() => {
+    if (!isLoading && !auth && !isLoginPage) {
+      navigate({ to: LOGIN_PATH });
     }
+  }, [auth, isLoading, isLoginPage, navigate]);
 
-    // Show protected layout for authenticated users
-    if (auth) {
-      return (
-        <div className="min-h-screen">
-          <Header />
-          <Outlet />
-          <TanStackRouterDevtools />
-        </div>
-      );
-    }
-
-    // Show login page for unauthenticated users
-    if (!auth && !isLoginPage) {
-      window.location.href = '/';
-      return null;
-    }
-
+  if (isLoading) {
     return (
-      <div className="min-h-screen">
-        <Outlet />
-        <TanStackRouterDevtools />
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
-});
+
+  if (!auth && !isLoginPage) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen">
+      {auth && <Header />}
+      <Outlet />
+      {import.meta.env.DEV && <TanStackRouterDevtools />}
+    </div>
+  );
+}

@@ -3,6 +3,10 @@ import api from '../api';
 import type { UserRole } from '@/types';
 import { useNavigate } from '@tanstack/react-router';
 
+const AUTH_STORAGE_KEY = 'token';
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+const STALE_TIME = 1000 * 60 * 5; // 5 minutes
+
 interface LoginCredentials {
   username: string;
   password: string;
@@ -23,16 +27,32 @@ interface AuthUser {
   role: UserRole;
 }
 
+class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
 function parseJwt(token: string): { role: string; exp: number } | null {
   try {
     const base64Url = token.split('.')[1];
+    if (!base64Url) {
+      throw new AuthError('Invalid token format');
+    }
+
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
       '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
     ).join(''));
     const parsed = JSON.parse(jsonPayload);
+
+    if (!parsed[ROLE_CLAIM] || !parsed.exp) {
+      throw new AuthError('Missing required claims in token');
+    }
+
     return {
-      role: parsed['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
+      role: parsed[ROLE_CLAIM],
       exp: parsed.exp
     };
   } catch (error) {
@@ -47,19 +67,31 @@ function isTokenExpired(exp: number): boolean {
   return currentTime >= exp;
 }
 
+function clearToken() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+function setToken(token: string) {
+  localStorage.setItem(AUTH_STORAGE_KEY, token);
+}
+
+function getToken(): string | null {
+  return localStorage.getItem(AUTH_STORAGE_KEY);
+}
+
 export function useCheckAuth() {
   return useQuery({
     queryKey: ['auth'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (!token) {
-        throw new Error('No token found');
+        throw new AuthError('No token found');
       }
 
       const decoded = parseJwt(token);
       if (!decoded || isTokenExpired(decoded.exp)) {
-        localStorage.removeItem('token');
-        throw new Error('Token expired');
+        clearToken();
+        throw new AuthError('Token expired');
       }
 
       try {
@@ -71,12 +103,12 @@ export function useCheckAuth() {
           }
         };
       } catch (error) {
-        localStorage.removeItem('token');
+        clearToken();
         throw error;
       }
     },
     retry: 0,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: STALE_TIME,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
@@ -92,10 +124,10 @@ export function useLogin() {
       
       const decoded = parseJwt(data.token);
       if (!decoded || isTokenExpired(decoded.exp)) {
-        throw new Error('Invalid token received');
+        throw new AuthError('Invalid token received');
       }
 
-      localStorage.setItem('token', data.token);
+      setToken(data.token);
       
       return {
         user: {
