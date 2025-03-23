@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Toaster } from 'sonner';
-import { useCreateAssignment, useAssignments, useEditAssignment } from '@/lib/hooks/useAssignments';
+import { useCreateAssignment, useAssignments, useEditAssignment, useDeleteAssignment } from '@/lib/hooks/useAssignments';
 import { toast } from 'sonner';
 import type { Assignment } from '@/types';
 
@@ -21,6 +21,7 @@ export default function TeacherDashboard() {
   const { data: assignments, isLoading, error } = useAssignments();
   const createAssignment = useCreateAssignment();
   const editAssignment = useEditAssignment();
+  const deleteAssignment = useDeleteAssignment();
 
   // Debug logging
   console.log('TeacherDashboard - Assignments:', assignments);
@@ -68,6 +69,20 @@ export default function TeacherDashboard() {
     } catch (error) {
       console.error('Update assignment error:', error);
       toast.error('Failed to update assignment');
+    }
+  };
+
+  const handleDeleteAssignment = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this assignment?')) {
+      return;
+    }
+
+    try {
+      await deleteAssignment.mutateAsync(id);
+      toast.success('Assignment deleted successfully');
+    } catch (error) {
+      console.error('Delete assignment error:', error);
+      toast.error('Failed to delete assignment');
     }
   };
 
@@ -190,12 +205,21 @@ export default function TeacherDashboard() {
                 ) : (
                   <>
                     <CardTitle>{assignment.title}</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setEditingAssignment(assignment)}
-                    >
-                      Edit
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setEditingAssignment(assignment)}
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => handleDeleteAssignment(assignment.id)}
+                        disabled={deleteAssignment.isPending}
+                      >
+                        {deleteAssignment.isPending ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    </div>
                   </>
                 )}
               </div>

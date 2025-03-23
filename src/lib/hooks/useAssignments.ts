@@ -114,4 +114,28 @@ export function useSubmitAssignment() {
       queryClient.invalidateQueries({ queryKey: ['submissions', variables.assignmentId] });
     },
   });
+}
+
+export function useDeleteAssignment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      try {
+        console.log('Deleting assignment:', id);
+        const response = await api.delete(`/Teacher/assignments/${id}`);
+        console.log('Delete response:', response.data);
+        return response.data;
+      } catch (error: any) {
+        console.error('Delete assignment error:', error);
+        if (error.response?.status === 401) {
+          throw new Error('Authentication failed. Please log in again.');
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+    },
+  });
 } 
