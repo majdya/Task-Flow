@@ -181,7 +181,7 @@ export const assignmentsService = {
   // Delete an assignment (teacher)
   deleteAssignment: async (id: number) => {
     try {
-      await api.delete(`/api/Teacher/assignments/${id}`);
+      await api.delete(`/Teacher/assignments/${id}`);
     } catch (error) {
       console.error(`Error deleting assignment ${id}:`, error);
       throw error;

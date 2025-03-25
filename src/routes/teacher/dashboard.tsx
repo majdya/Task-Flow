@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Plus } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { assignmentsService, type Assignment } from "@/lib/services/assignments";
 import { useCheckAuth } from "@/lib/hooks/useAuth";
 import { AssignmentModal } from "@/components/AssignmentModal";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 export const Route = createFileRoute('/teacher/dashboard')({
   component: TeacherDashboard,
@@ -41,6 +42,7 @@ function TeacherDashboard() {
   const { data: auth, isLoading: isAuthLoading } = useCheckAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | undefined>();
+  const queryClient = useQueryClient();
 
   const { 
     data: assignments = [], 
@@ -58,6 +60,18 @@ function TeacherDashboard() {
     retry: 3,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: assignmentsService.deleteAssignment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teacher', 'assignments'] });
+      toast.success('Assignment deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete assignment');
+      console.error('Delete assignment error:', error);
+    },
+  });
+
   const handleCreateClick = () => {
     setSelectedAssignment(undefined);
     setIsModalOpen(true);
@@ -66,6 +80,12 @@ function TeacherDashboard() {
   const handleEditClick = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleCloseModal = () => {
@@ -122,6 +142,7 @@ function TeacherDashboard() {
             key={assignment.id} 
             assignment={assignment}
             onEdit={() => handleEditClick(assignment)}
+            onDelete={() => handleDeleteClick(assignment.id)}
           />
         ))}
 
@@ -144,9 +165,10 @@ function TeacherDashboard() {
 interface AssignmentCardProps {
   assignment: Assignment;
   onEdit: () => void;
+  onDelete: () => void;
 }
 
-function AssignmentCard({ assignment, onEdit }: AssignmentCardProps) {
+function AssignmentCard({ assignment, onEdit, onDelete }: AssignmentCardProps) {
   const dueDate = new Date(assignment.dueDate);
   const isOverdue = dueDate < new Date();
   const formattedDate = new Intl.DateTimeFormat('en-US', {
@@ -182,6 +204,14 @@ function AssignmentCard({ assignment, onEdit }: AssignmentCardProps) {
                 <Eye className="w-4 h-4 mr-2" />
                 View Submissions
               </Link>
+            </Button>
+            <Button 
+              variant="destructive" 
+              size="icon"
+              onClick={onDelete}
+              title="Delete Assignment"
+            >
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </div>
